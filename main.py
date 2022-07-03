@@ -1,6 +1,7 @@
 import argparse
 import os
 
+import minerl
 import gym
 from pytorch_lightning.callbacks import ModelSummary
 import pytorch_lightning as pl
@@ -26,7 +27,7 @@ def main(hparams):
 
     # TODO: Improve action_manager dependency with dataset
     # TODO: Add parameter for environment
-    dataset = MineRLDataset(action_manager.action_id, "MineRLTreechop-v0", hparams.data_path)
+    dataset = MineRLDataset("MineRLTreechop-v0", action_manager.action_id, hparams.data_path)
     train_len = int(0.8*len(dataset))
     val_len = len(dataset) - train_len
     train_dataset, validation_dataset = torch.utils.data.random_split(dataset, [train_len, val_len])

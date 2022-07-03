@@ -45,16 +45,19 @@ class BCAgent(pl.LightningModule):
 
         self.log("val_loss", loss, on_step=True, on_epoch=True)
 
-        rewards = []
-        obs = self.env.reset()
-        for i in range(2000):
-            action = self(torch.tensor(np.expand_dims(obs, axis=0), dtype=torch.float32, device=self.device))
-            obs, reward, done, _ = self.env.step(torch.argmax(action).item())
-            rewards.append(reward)
-            if done:
-                break
+        try:
+            rewards = []
+            obs = self.env.reset()
+            for i in range(2000):
+                action = self(torch.tensor(np.expand_dims(obs, axis=0), dtype=torch.float32, device=self.device))
+                obs, reward, done, _ = self.env.step(torch.argmax(action).item())
+                rewards.append(reward)
+                if done:
+                    break
 
-        self.log("val_reward", np.mean(rewards), on_step=True, on_epoch=True)
+            self.log("val_reward", np.mean(rewards), on_step=True, on_epoch=True)
+        except:
+            print("Exception")
 
     def configure_optimizers(self) -> List[Optimizer]:
         """ Initialize Adam optimizer"""

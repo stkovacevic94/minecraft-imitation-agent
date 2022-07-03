@@ -1,5 +1,4 @@
-FROM nvidia/cuda:11.3.1-cudnn8-runtime-ubuntu20.04
-
+FROM pytorch/pytorch:1.12.0-cuda11.3-cudnn8-runtime
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install base utilities
@@ -11,8 +10,4 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /workspace
-
-COPY ./requirements.txt ./requirements.txt
-
-RUN pip install -r requirements.txt
+RUN pip3 install wandb pandas minerl pytorch-lightning
