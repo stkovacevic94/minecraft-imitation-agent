@@ -1,9 +1,10 @@
 import argparse
 import os
+import logging
 
 import minerl
 import gym
-from pytorch_lightning.callbacks import ModelSummary
+from pytorch_lightning.callbacks import ModelSummary, ModelCheckpoint
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import seed_everything
@@ -53,7 +54,7 @@ def main(hparams):
         val_check_interval=0.2,
         logger=wandb_logger,
         track_grad_norm=2,
-        callbacks=[ModelSummary(max_depth=1)],
+        callbacks=[ModelSummary(max_depth=1), ModelCheckpoint(save_top_k=3, monitor="val_reward")],
         deterministic=deterministic,
         fast_dev_run=hparams.fast_dev_run
     )
@@ -69,6 +70,8 @@ def add_training_specific_args(parent_parser: argparse.ArgumentParser):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+
     parser = argparse.ArgumentParser()
 
     # PROGRAM level args

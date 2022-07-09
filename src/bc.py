@@ -6,7 +6,9 @@ import torch.optim as optim
 import pytorch_lightning as pl
 import numpy as np
 
-from typing import List
+from typing import List, Union
+
+from pytorch_lightning.utilities.types import EPOCH_OUTPUT
 from torch.optim import Optimizer
 
 
@@ -43,19 +45,21 @@ class BCAgent(pl.LightningModule):
 
         loss = self._loss_fn(logits, actions)
 
-        self.log("val_loss", loss, on_step=True, on_epoch=True)
+        self.log("val_loss", loss)
 
+    def validation_epoch_end(self, outputs: Union[EPOCH_OUTPUT, List[EPOCH_OUTPUT]]) -> None:
         try:
-            rewards = []
+            print("Validating on live environment...")
+            total_reward = 0
             obs = self.env.reset()
-            for i in range(2000):
+            for i in range(3000):
                 action = self(torch.tensor(np.expand_dims(obs, axis=0), dtype=torch.float32, device=self.device))
                 obs, reward, done, _ = self.env.step(torch.argmax(action).item())
-                rewards.append(reward)
+                total_reward += reward
                 if done:
                     break
 
-            self.log("val_reward", np.mean(rewards), on_step=True, on_epoch=True)
+            self.log("val_reward", total_reward)
         except:
             print("Exception")
 

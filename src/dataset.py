@@ -105,6 +105,6 @@ if __name__ == '__main__':
 
     # TODO: Improve action_manager dependency with dataset
     # TODO: Add parameter for environment
-    dataset = MineRLDataset("MineRLTreechop-v0", action_manager.action_id, "./dataset")
+    dataset = MineRLDataset("MineRLTreechop-v0", action_manager.action_id, "../dataset")
 
     dataset[0]
