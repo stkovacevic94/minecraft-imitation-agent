@@ -23,7 +23,7 @@ RUN apt-get update && \
     tmux \
     htop \
     gcc \
-    python-opengl\
+    python-opengl \
     x11-xserver-utils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

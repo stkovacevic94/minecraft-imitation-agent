@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     script_config = aml.ScriptRunConfig(
         source_directory="./src",
-        script='main.py',
+        script='run_bc.py',
         arguments=[
                 '--data_path', "./dataset",
                 '--lr', 0.0001,

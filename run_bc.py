@@ -6,14 +6,13 @@ import minerl
 import gym
 from pytorch_lightning.callbacks import ModelSummary, ModelCheckpoint
 import pytorch_lightning as pl
-import torch
 from pytorch_lightning import seed_everything
 from pytorch_lightning.loggers import WandbLogger
 from torch.utils.data import DataLoader
 
 from bc import BCAgent
 from dataset import MineRLDataset
-from policies import CNNPolicy
+from model import PolicyModel, ImpalaResNetCNN
 from wrappers import ActionShaping, ActionManager, ObservationShaping
 
 
@@ -29,14 +28,10 @@ def main(hparams):
     # TODO: Improve action_manager dependency with dataset
     # TODO: Add parameter for environment
     dataset = MineRLDataset("MineRLTreechop-v0", action_manager.action_id, hparams.data_path)
-    train_len = int(0.8*len(dataset))
-    val_len = len(dataset) - train_len
-    train_dataset, validation_dataset = torch.utils.data.random_split(dataset, [train_len, val_len])
-    train_loader = DataLoader(train_dataset, batch_size=hparams.batch_size, shuffle=True, num_workers=4, pin_memory=True)
-    validation_loader = DataLoader(validation_dataset, batch_size=hparams.batch_size, shuffle=False, pin_memory=True)
+    data_loader = DataLoader(dataset, batch_size=hparams.batch_size, shuffle=True, num_workers=4, pin_memory=True)
 
-    policy = CNNPolicy(env.action_space.n)
-    agent = BCAgent(policy, env, hparams.lr)
+    model = PolicyModel(num_actions=env.action_space.n, image_channels=3, cnn_module=ImpalaResNetCNN, hidden_size=512)
+    agent = BCAgent(model, env, hparams.lr)
 
     os.makedirs(hparams.logdir, exist_ok=True)
     # TODO: group should be parameter
@@ -46,7 +41,7 @@ def main(hparams):
         job_type='train',
         log_model='all',
         save_dir=hparams.logdir)
-    wandb_logger.watch(policy, log='all')
+    wandb_logger.watch(model, log='all')
 
     trainer = pl.Trainer(
         gpus=1,
@@ -59,7 +54,7 @@ def main(hparams):
         fast_dev_run=hparams.fast_dev_run
     )
 
-    trainer.fit(agent, train_loader, validation_loader)
+    trainer.fit(agent, data_loader)
 
 
 def add_training_specific_args(parent_parser: argparse.ArgumentParser):
