@@ -8,7 +8,7 @@ import torch
 
 import wandb
 from bc import BCAgent
-from src.policies import CNNPolicy
+from model import PolicyModel, ImpalaResNetCNN
 from wrappers import ActionShaping, ActionManager, ObservationShaping
 
 if __name__ == "__main__":
@@ -23,8 +23,8 @@ if __name__ == "__main__":
     artifact_dir = artifact.download()
 
     # Load the agent
-    policy = CNNPolicy(env.action_space.n)
-    agent = BCAgent.load_from_checkpoint(os.path.join(artifact_dir, "model.ckpt"), policy=policy, env=env)
+    model = PolicyModel(env.action_space.n, 3, ImpalaResNetCNN, 512)
+    agent = BCAgent.load_from_checkpoint(os.path.join(artifact_dir, "model.ckpt"), policy=model, env=env)
 
     # Test the agent
     done = False
