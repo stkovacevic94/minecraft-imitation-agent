@@ -100,7 +100,7 @@ class MineRLDataset(Dataset):
 
 
 if __name__ == '__main__':
-    from wrappers import ActionManager
+    from env.wrappers import ActionManager
     action_manager = ActionManager()
 
     # TODO: Improve action_manager dependency with dataset
