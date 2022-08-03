@@ -4,7 +4,7 @@ import gym
 import numpy as np
 
 
-class ExtractPOV(gym.ObservationWrapper):
+class ExtractPOVTransposeAndNormalize(gym.ObservationWrapper):
     """
 
     """
@@ -14,7 +14,10 @@ class ExtractPOV(gym.ObservationWrapper):
 
     def observation(self, observation):
         # Minecraft returns shapes in NHWC by default
-        return observation['pov']
+        observation = observation['pov']
+        if len(observation.shape) == 3:
+            observation = np.expand_dims(observation, axis=0)
+        return observation.transpose((0, 3, 1, 2)).astype(np.float32) / 255.0
 
 
 class ReversibleActionWrapper(gym.ActionWrapper, ABC):
@@ -110,38 +113,33 @@ class ActionShaping(ReversibleActionWrapper):
         self.action_space = gym.spaces.Discrete(len(self.actions) + 1)
 
     def action(self, action):
-        if action == -1:
+        if action == 7:
             return self.env.action_space.noop()
         else:
             return self.actions[action]
 
-    def reverse_action(self, action: dict) -> np.ndarray:
-        camera_actions = action["camera"].squeeze()
-        attack_actions = action["attack"].squeeze()
-        forward_actions = action["forward"].squeeze()
-        jump_actions = action["jump"].squeeze()
-        batch_size = len(camera_actions)
-        actions = np.zeros((batch_size,), dtype=int)
+    def reverse_action(self, action: dict) -> int:
+        camera_action = action["camera"].squeeze()
+        attack_action = action["attack"].squeeze()
+        forward_action = action["forward"].squeeze()
+        jump_action = action["jump"].squeeze()
 
-        for i in range(len(camera_actions)):
-            # Moving camera is most important (horizontal first)
-            if camera_actions[i][0] < -self.camera_margin:
-                actions[i] = 3
-            elif camera_actions[i][0] > self.camera_margin:
-                actions[i] = 4
-            elif camera_actions[i][1] > self.camera_margin:
-                actions[i] = 5
-            elif camera_actions[i][1] < -self.camera_margin:
-                actions[i] = 6
-            elif forward_actions[i] == 1:
-                if jump_actions[i] == 1:
-                    actions[i] = 2
-                else:
-                    actions[i] = 1
-            elif attack_actions[i] == 1:
-                actions[i] = 0
+        # Moving camera is most important (horizontal first)
+        if camera_action[0] < -self.camera_margin:
+            return 3
+        elif camera_action[0] > self.camera_margin:
+            return 4
+        elif camera_action[1] > self.camera_margin:
+            return 5
+        elif camera_action[1] < -self.camera_margin:
+            return 6
+        elif forward_action == 1:
+            if jump_action == 1:
+                return 2
             else:
-                # No reasonable mapping (would be no-op)
-                actions[i] = -1
-
-        return actions
+                return 1
+        elif attack_action == 1:
+            return 0
+        else:
+            # No reasonable mapping (would be no-op)
+            return 7

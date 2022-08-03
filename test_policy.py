@@ -1,21 +1,20 @@
 import os
 import logging
 
-import minerl
 import gym
 import numpy as np
 import torch
 
 import wandb
-from bc import BCAgent
-from model import PolicyModel, ImpalaResNetCNN
-from wrappers import ActionShaping, ActionManager, ObservationShaping
+from algorithms.bc import BCAgent
+from model import ImpalaResNetCNN, PolicyNetwork
+from wrappers import ActionShaping, ExtractPOVTransposeAndNormalize
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
     # Create environment
-    env = ObservationShaping(ActionShaping(gym.make("MineRLTreechop-v0"), ActionManager()))
+    env = ExtractPOVTransposeAndNormalize(ActionShaping(gym.make("MineRLTreechop-v0")))
 
     # Download checkpoint locally (if not already cached)
     run = wandb.init()
@@ -23,7 +22,7 @@ if __name__ == "__main__":
     artifact_dir = artifact.download()
 
     # Load the agent
-    model = PolicyModel(env.action_space.n, 3, ImpalaResNetCNN, 512)
+    model = PolicyNetwork(env.action_space.n, 3, ImpalaResNetCNN, 512)
     agent = BCAgent.load_from_checkpoint(os.path.join(artifact_dir, "model.ckpt"), policy=model, env=env)
 
     # Test the agent
