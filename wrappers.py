@@ -17,7 +17,8 @@ class ExtractPOVTransposeAndNormalize(gym.ObservationWrapper):
         observation = observation['pov']
         if len(observation.shape) == 3:
             observation = np.expand_dims(observation, axis=0)
-        return observation.transpose((0, 3, 1, 2)).astype(np.float32) / 255.0
+        wrapped_obs = observation.transpose((0, 3, 1, 2)).astype(np.float32) / 255.0
+        return wrapped_obs.copy()
 
 
 class ReversibleActionWrapper(gym.ActionWrapper, ABC):

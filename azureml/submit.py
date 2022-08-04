@@ -4,7 +4,7 @@ import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_path', type=str, help='Root directory path for config and keys')
+    parser.add_argument('--config_path', type=str, required=True, help='Root directory path for config and keys')
     args = parser.parse_args()
 
     ws = aml.Workspace.from_config(f'{args.config_path}/aml_workspace.json')
@@ -17,16 +17,16 @@ if __name__ == '__main__':
     env.environment_variables['WANDB_API_KEY'] = auth_keys['wandb']
     env.environment_variables['WANDB_ENTITY'] = 'skovacevic94'
     env.environment_variables['WANDB_PROJECT'] = experiment_name
-    env.environment_variables['CUDA_LAUNCH_BLOCKING'] = '1'
+    #env.environment_variables['CUDA_LAUNCH_BLOCKING'] = '1'
 
     script_config = aml.ScriptRunConfig(
-        source_directory="./src",
+        source_directory=".",
         script='run_bc.py',
         arguments=[
                 '--data_path', "./dataset",
                 '--lr', 0.0001,
                 '--batch_size', 128,
-                '--max_epoch', 100,
+                '--max_epoch', 10,
                 '--seed', 42],
         environment=env,
         compute_target=aml.ComputeTarget(workspace=ws, name='BasicK80')
