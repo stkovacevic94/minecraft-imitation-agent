@@ -1,60 +1,94 @@
+from abc import ABC
+from collections import deque, namedtuple
 from os import path
+from typing import Tuple, Iterator
 
-import pandas as pd
-import torch
+import numpy as np
 import tqdm
 import minerl
-from torch.utils.data import Dataset
+
+from torch.utils.data import IterableDataset
+from torch.utils.data.dataset import T_co
+
+# Named tuple for storing experience steps gathered in training
+Experience = namedtuple(
+    "Experience",
+    field_names=["obs", "action", "reward", "next_obs", "done"],
+)
 
 
-class MineRLDataset(Dataset):
-    def __init__(self, wrapped_env, save_path, remove_noop=True) -> None:
-        env_id = wrapped_env.unwrapped.spec.id
-        self.wrapped_env = wrapped_env
+class ReplayBuffer:
+    """Replay Buffer for storing past experiences allowing the agent to learn from them.
 
-        # Download data if needed
-        if not path.exists(path.join(save_path, env_id)):
-            minerl.data.download(
-                directory=save_path,
-                environment=env_id,
-                update_environment_variables=False,
-                disable_cache=True
-            )
+    Args:
+        capacity: size of the buffer
+    """
 
-        data_handle = minerl.data.make(env_id, save_path)
-        data = []
-        for trajectory_idx, stream_name in enumerate(tqdm.tqdm(data_handle.get_trajectory_names()[:2])):
-            for time_step, transition in enumerate(
-                    data_handle.load_data(stream_name=stream_name)):
-                obs, action, reward, next_obs, done = transition
+    def __init__(self, capacity: int) -> None:
+        self.buffer = deque(maxlen=capacity)
 
-                if remove_noop and wrapped_env.wrap_action(action) != 7:
-                    data.append({
-                        "trajectory_idx": trajectory_idx,
-                        "time_step": time_step,
-                        "obs": obs,
-                        "action": action,
-                        "reward": reward,
-                        "next_obs": next_obs,
-                        "done": done
-                    })
+    def __len__(self) -> int:
+        return len(self.buffer)
 
-        self.transitions = pd.DataFrame(data)
+    def append(self, experience: Experience) -> None:
+        """Add experience to the buffer.
 
-    def __len__(self):
-        return self.transitions.shape[0]
+        Args:
+            experience: tuple (obs, action, reward, next_obs, done)
+        """
+        self.buffer.append(experience)
 
-    def __getitem__(self, idx):
-        item = self.transitions.iloc[idx]
+    def sample(self, batch_size: int) -> Tuple:
+        indices = np.random.choice(len(self.buffer), batch_size, replace=False)
+        obs, actions, rewards, next_obs, dones = zip(*(self.buffer[idx] for idx in indices))
 
-        wrapped_obs = self.wrapped_env.observation(item['obs'])
-        wrapped_next_obs = self.wrapped_env.observation(item['next_obs'])
-        wrapped_action = self.wrapped_env.wrap_action(item['action'])
+        return (
+            np.array(obs, dtype=np.float32),
+            np.array(actions, dtype=np.longlong),
+            np.array(rewards, dtype=np.float32),
+            np.array(next_obs, dtype=np.float32),
+            np.array(dones, dtype=bool)
+        )
 
-        th_wrapped_obs = torch.tensor(wrapped_obs, dtype=torch.float32)
-        th_action = torch.tensor(wrapped_action, dtype=torch.long)
-        th_reward = torch.tensor(item['reward'], dtype=torch.float32)
-        th_wrapped_next_obs = torch.tensor(wrapped_next_obs, dtype=torch.float32)
-        th_done = torch.tensor(item['done'])
+    def clear(self):
+        self.buffer.clear()
 
-        return th_wrapped_obs, th_action, th_reward, th_wrapped_next_obs, th_done
+
+class ReplayBufferTorch(IterableDataset, ABC):
+    def __init__(self, replay_buffer: ReplayBuffer, sample_size: int):
+        self.replay_buffer = replay_buffer
+        self.sample_size = sample_size
+
+    def __iter__(self) -> Iterator[T_co]:
+        obs, actions, rewards, next_obs, dones = self.replay_buffer.sample(self.sample_size)
+        for i in range(len(dones)):
+            yield obs[i], actions[i], rewards[i], next_obs[i], dones[i]
+
+
+def load_expert_demonstrations(replay_buffer: ReplayBuffer, wrapped_env, save_path, fast_dev_run: bool = False) -> None:
+    env_id = wrapped_env.unwrapped.spec.id
+
+    # Download data if needed
+    if not path.exists(path.join(save_path, env_id)):
+        minerl.data.download(
+            directory=save_path,
+            environment=env_id,
+            update_environment_variables=False,
+            disable_cache=True
+        )
+
+    data_handle = minerl.data.make(env_id, save_path)
+    trajectories_to_load = data_handle.get_trajectory_names()
+    if fast_dev_run:
+        trajectories_to_load = data_handle.get_trajectory_names()[:2]
+    for trajectory_idx, stream_name in enumerate(tqdm.tqdm(trajectories_to_load)):
+        for time_step, transition in enumerate(
+                data_handle.load_data(stream_name=stream_name)):
+            obs, action, reward, next_obs, done = transition
+            wrapped_obs = wrapped_env.observation(obs)
+            wrapped_action = wrapped_env.wrap_action(action)
+            wrapped_next_obs = wrapped_env.observation(next_obs)
+
+            if wrapped_action != 7:
+                experience = (wrapped_obs, wrapped_action, reward, wrapped_next_obs, done)
+                replay_buffer.append(experience)

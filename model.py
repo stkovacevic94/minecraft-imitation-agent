@@ -3,7 +3,7 @@ from torch.nn import functional as F
 import math
 
 
-class PolicyNetwork(nn.Module):
+class Model(nn.Module):
     def __init__(self, num_actions, image_channels, cnn_module, hidden_size=256):
         super().__init__()
 
