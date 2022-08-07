@@ -3,6 +3,7 @@ import os
 import logging
 
 import gym
+import wandb
 from pytorch_lightning.callbacks import ModelSummary, ModelCheckpoint
 import pytorch_lightning as pl
 from pytorch_lightning import seed_everything
@@ -42,8 +43,10 @@ def main(hparams):
 
     os.makedirs(hparams.logdir, exist_ok=True)
     wandb_logger = WandbLogger(
+        settings=wandb.Settings(start_method="fork") if os.name == 'posix' else None,
         project="master-thesis",
         group="SQIL",
+        job_type='train',
         log_model='all',
         save_dir=hparams.logdir)
     wandb_logger.watch(q_network, log='all')
@@ -74,11 +77,11 @@ if __name__ == "__main__":
 
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size')
 
-    parser.add_argument('--learning_rate', type=float, default=0.0001, help='Learning rate')
+    parser.add_argument('--learning_rate', type=float, default=0.00001, help='Learning rate')
     parser.add_argument('--episode_max_length', type=int, default=3000, help='Max episode length')
     parser.add_argument('--alpha', type=float, default=4, help='Soft Q Learning alpha parameter')
-    parser.add_argument('--gamma', type=float, default=0.99, help='MDP discount parameter gamma')
-    parser.add_argument('--sync_rate', type=int, default=4, help='Rate at which target network and online network sync')
+    parser.add_argument('--gamma', type=float, default=0.9, help='MDP discount parameter gamma')
+    parser.add_argument('--sync_rate', type=int, default=50, help='Rate at which target network and online network sync')
 
     args = parser.parse_args()
 

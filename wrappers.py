@@ -111,13 +111,10 @@ class ActionShaping(ReversibleActionWrapper):
                 act['attack'] = 1
             self.actions.append(act)
 
-        self.action_space = gym.spaces.Discrete(len(self.actions) + 1)
+        self.action_space = gym.spaces.Discrete(len(self.actions))
 
     def action(self, action):
-        if action == 7:
-            return self.env.action_space.noop()
-        else:
-            return self.actions[action]
+        return self.actions[action]
 
     def reverse_action(self, action: dict) -> int:
         camera_action = action["camera"].squeeze()
@@ -143,4 +140,4 @@ class ActionShaping(ReversibleActionWrapper):
             return 0
         else:
             # No reasonable mapping (would be no-op)
-            return 7
+            return -1

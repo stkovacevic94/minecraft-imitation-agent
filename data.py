@@ -80,7 +80,7 @@ def load_expert_demonstrations(replay_buffer: ReplayBuffer, wrapped_env, save_pa
     data_handle = minerl.data.make(env_id, save_path)
     trajectories_to_load = data_handle.get_trajectory_names()
     if fast_dev_run:
-        trajectories_to_load = data_handle.get_trajectory_names()[:2]
+        trajectories_to_load = data_handle.get_trajectory_names()[:5]
     for trajectory_idx, stream_name in enumerate(tqdm.tqdm(trajectories_to_load)):
         for time_step, transition in enumerate(
                 data_handle.load_data(stream_name=stream_name)):
@@ -89,6 +89,6 @@ def load_expert_demonstrations(replay_buffer: ReplayBuffer, wrapped_env, save_pa
             wrapped_action = wrapped_env.wrap_action(action)
             wrapped_next_obs = wrapped_env.observation(next_obs)
 
-            if wrapped_action != 7:
+            if wrapped_action != -1:
                 experience = (wrapped_obs, wrapped_action, reward, wrapped_next_obs, done)
                 replay_buffer.append(experience)
