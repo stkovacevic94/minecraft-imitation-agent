@@ -38,6 +38,7 @@ class SQILAgent(pl.LightningModule):
         self.obs = None
         self.episode_step = 0
         self.episode_reward = 0
+        self.episode = 0
 
         self.expert_demonstrations = expert_demonstrations
         self.online_buffer = ReplayBuffer(online_buffer_capacity)
@@ -108,13 +109,15 @@ class SQILAgent(pl.LightningModule):
             self.target_q_network.load_state_dict(self.online_q_network.state_dict())
 
         log_dict = {
-            'loss': loss
+            'loss': loss,
+            'episode': self.episode
         }
         if done or self.episode_step == self.hparams.episode_max_length:
             log_dict['reward'] = self.episode_reward
             self.obs = self.env.reset()
             self.episode_step = 0
             self.episode_reward = 0
+            self.episode += 1
         else:
             self.obs = next_obs
 

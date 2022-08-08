@@ -11,7 +11,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from algorithms.sqil import SQILAgent
 from data import ReplayBuffer, load_expert_demonstrations
-from model import ImpalaResNetCNN, Model
+from model import ImpalaResNetCNN, Model, AtariCNN
 from wrappers import ActionShaping, ExtractPOVTransposeAndNormalize
 
 
@@ -28,7 +28,7 @@ def main(hparams):
     q_network = Model(
         num_actions=env.action_space.n,
         image_channels=3,
-        cnn_module=ImpalaResNetCNN,
+        cnn_module=AtariCNN,
         hidden_size=512)
 
     agent = SQILAgent(q_network=q_network,
