@@ -10,14 +10,21 @@ class ExtractPOVTransposeAndNormalize(gym.ObservationWrapper):
     """
     def __init__(self, env):
         super().__init__(env)
-        self.observation_space = self.env.observation_space['pov']
+
+        non_transposed_shape = self.env.observation_space['pov'].shape
+        self.high = np.max(self.env.observation_space['pov'].high)
+        transposed_shape = (non_transposed_shape[2],
+                            non_transposed_shape[0],
+                            non_transposed_shape[1])
+        # Note: this assumes the Box is of the form where low/high values are vector but need to be scalar
+        transposed_obs_space = gym.spaces.Box(low=np.min(self.env.observation_space['pov'].low) / 255.0,
+                                              high=np.max(self.env.observation_space['pov'].high / 255.0),
+                                              shape=transposed_shape,
+                                              dtype=np.float32)
+        self.observation_space = transposed_obs_space
 
     def observation(self, observation):
-        # Minecraft returns shapes in NHWC by default
-        observation = observation['pov']
-        if len(observation.shape) == 3:
-            observation = np.expand_dims(observation, axis=0)
-        wrapped_obs = observation.transpose((0, 3, 1, 2)).astype(np.float32) / 255.0
+        wrapped_obs = observation['pov'].transpose((2, 0, 1)).astype(np.float32) / 255.0
         return wrapped_obs.copy()
 
 

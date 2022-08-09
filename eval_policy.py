@@ -7,7 +7,7 @@ import torch
 
 import wandb
 from algorithms.bc import BCAgent
-from model import ImpalaResNetCNN, PolicyNetwork
+from model import AtariCNN, Model
 from wrappers import ActionShaping, ExtractPOVTransposeAndNormalize
 
 if __name__ == "__main__":
@@ -18,12 +18,12 @@ if __name__ == "__main__":
 
     # Download checkpoint locally (if not already cached)
     run = wandb.init()
-    artifact = run.use_artifact('skovacevic94/master-thesis/model-3dz5e3w7:v0', type='model')
+    artifact = run.use_artifact('stkovacevic94/master-thesis/model-eb9vlat0:v2', type='model')
     artifact_dir = artifact.download()
 
     # Load the agent
-    model = PolicyNetwork(env.action_space.n, 3, ImpalaResNetCNN, 512)
-    agent = BCAgent.load_from_checkpoint(os.path.join(artifact_dir, "model.ckpt"), policy=model, env=env)
+    model = Model(env.action_space.n, 3, AtariCNN, 512)
+    agent = BCAgent.load_from_checkpoint(os.path.join(artifact_dir, "model.ckpt"), policy=model, env=env, expert_demonstrations=None)
 
     # Test the agent
     done = False
@@ -31,9 +31,7 @@ if __name__ == "__main__":
     total_reward = 0
     while not done:
         env.render()
-        action_distribution = agent(torch.tensor(np.expand_dims(obs, axis=0), dtype=torch.float32))
-        action = torch.argmax(action_distribution).item()
-        print(action_distribution)
+        action = agent(torch.tensor(np.expand_dims(obs, axis=0), dtype=torch.float32))
         print(action)
         obs, reward, done, _ = env.step(action)
         total_reward += reward

@@ -38,6 +38,16 @@ class ReplayBuffer:
         """
         self.buffer.append(experience)
 
+    def __getitem__(self, item):
+        obs, actions, rewards, next_obs, dones = self.buffer[item]
+        return (
+            np.array(obs, dtype=np.float32),
+            np.array(actions, dtype=np.longlong),
+            np.array(rewards, dtype=np.float32),
+            np.array(next_obs, dtype=np.float32),
+            np.array(dones, dtype=bool)
+        )
+
     def sample(self, batch_size: int) -> Tuple:
         indices = np.random.choice(len(self.buffer), batch_size, replace=False)
         obs, actions, rewards, next_obs, dones = zip(*(self.buffer[idx] for idx in indices))

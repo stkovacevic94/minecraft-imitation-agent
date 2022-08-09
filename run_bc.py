@@ -3,15 +3,15 @@ import os
 import logging
 
 import gym
+import wandb
 from pytorch_lightning.callbacks import ModelSummary, ModelCheckpoint
 import pytorch_lightning as pl
 from pytorch_lightning import seed_everything
 from pytorch_lightning.loggers import WandbLogger
-from torch.utils.data import DataLoader
 
 from algorithms.bc import BCAgent
-from data import get_dataset
-from model import ImpalaResNetCNN, PolicyNetwork
+from data import ReplayBuffer, load_expert_demonstrations
+from model import ImpalaResNetCNN, Model, AtariCNN
 from wrappers import ActionShaping, ExtractPOVTransposeAndNormalize
 
 
@@ -22,22 +22,30 @@ def main(hparams):
         deterministic = True
 
     env = ExtractPOVTransposeAndNormalize(ActionShaping(gym.make("MineRLTreechop-v0")))
-    dataset = get_dataset(env, hparams.data_path, hparams.fast_dev_run)
-    data_loader = DataLoader(dataset, batch_size=hparams.batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    expert_demonstrations = ReplayBuffer(capacity=500000)
+    load_expert_demonstrations(expert_demonstrations, env, hparams.data_path, hparams.fast_dev_run)
 
-    policy_network = PolicyNetwork(
+    policy_network = Model(
         num_actions=env.action_space.n,
         image_channels=3,
-        cnn_module=ImpalaResNetCNN,
+        cnn_module=AtariCNN,
         hidden_size=512)
-    agent = BCAgent(policy_network, env, hparams.lr, 500)
+    agent = BCAgent(
+        policy=policy_network,
+        env=env,
+        expert_demonstrations=expert_demonstrations,
+        batch_size=hparams.batch_size,
+        lr=hparams.lr,
+        env_validation_period=500)
 
     os.makedirs(hparams.logdir, exist_ok=True)
     wandb_logger = WandbLogger(
         project="master-thesis",
         group="BC",
+        job_type='train',
         log_model='all',
-        save_dir=hparams.logdir)
+        save_dir=hparams.logdir,
+        settings=wandb.Settings(start_method="fork") if os.name == 'posix' else None)
     wandb_logger.watch(policy_network, log='all')
 
     trainer = pl.Trainer(
@@ -50,21 +58,7 @@ def main(hparams):
         fast_dev_run=hparams.fast_dev_run
     )
 
-    trainer.fit(agent, data_loader)
-
-
-def add_training_specific_args(parent_parser: argparse.ArgumentParser):
-    parser = parent_parser.add_argument_group("Training")
-    parser.add_argument('--max_epochs', type=int, default=100, help='Number of epochs to train')
-    parser.add_argument('--fast_dev_run', action="store_true", help='Run 1 epoch for test')
-    return parent_parser
-
-
-def add_data_specific_args(parent_parser: argparse.ArgumentParser):
-    parser = parent_parser.add_argument_group("Data")
-    parser.add_argument('--data_path', type=str, required=True, help='Dataset path')
-    parser.add_argument('--batch_size', type=int, default=64, help='Batch size')
-    return parent_parser
+    trainer.fit(agent)
 
 
 if __name__ == "__main__":
@@ -72,15 +66,15 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    # PROGRAM level args
     parser.add_argument('--seed', type=int, default=None, help='Specific seed for reproducibility')
     parser.add_argument('--logdir', type=str, default="./logs", help='Root directory path for logs')
-    # TRAINER level args
-    parser = add_training_specific_args(parser)
-    # MODEL level args
-    parser = BCAgent.add_model_specific_args(parser)
-    # DATA level args
-    parser = add_data_specific_args(parser)
+    parser.add_argument('--data_path', type=str, required=True, help='Dataset path')
+    parser.add_argument('--max_epochs', type=int, default=100, help='Number of epochs to train')
+    parser.add_argument('--fast_dev_run', action="store_true", help='Run 1 epoch for test')
+
+    parser.add_argument('--batch_size', type=int, default=64, help='Batch size')
+
+    parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
 
     args = parser.parse_args()
 

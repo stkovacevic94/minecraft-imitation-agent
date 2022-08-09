@@ -15,21 +15,23 @@ if __name__ == '__main__':
 
     env = aml.Environment.get(workspace=ws, name='minerl-th')
     env.environment_variables['WANDB_API_KEY'] = auth_keys['wandb']
-    env.environment_variables['WANDB_ENTITY'] = 'skovacevic94'
+    env.environment_variables['WANDB_ENTITY'] = 'stkovacevic94'
     env.environment_variables['WANDB_PROJECT'] = experiment_name
-    #env.environment_variables['CUDA_LAUNCH_BLOCKING'] = '1'
 
-    script_config = aml.ScriptRunConfig(
-        source_directory=".",
-        script='run_bc.py',
-        arguments=[
-                '--data_path', "./dataset",
-                '--lr', 0.0001,
-                '--batch_size', 128,
-                '--max_epoch', 10,
-                '--seed', 42],
+    experiment = aml.Experiment(workspace=ws, name=experiment_name)
+
+    config = aml.ScriptRunConfig(
+        source_directory='../',
+        command=[
+            'xvfb-run -a python',
+            'run_bc.py',
+            '--data_path', "./dataset",
+            '--batch_size', '64',
+            '--max_epoch', '20',
+            '--seed', '42'
+        ],
+        docker_runtime_config=aml.runconfig.DockerConfiguration(use_docker=True),
         environment=env,
-        compute_target=aml.ComputeTarget(workspace=ws, name='BasicK80')
-    )
+        compute_target=aml.ComputeTarget(workspace=ws, name='BasicK80'))
 
-    run = aml.Experiment(workspace=ws, name=experiment_name).submit(config=script_config)
+    train_run = experiment.submit(config)
