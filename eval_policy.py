@@ -1,29 +1,41 @@
 import os
-import logging
 
 import gym
 import numpy as np
 import torch
 
 import wandb
-from algorithms.bc import BCAgent
-from model import AtariCNN, Model
-from wrappers import ActionShaping, ExtractPOVTransposeAndNormalize
+
+from algorithms.model import AtariCNN
+from algorithms.sqil import SQILAgent
+from wrappers import ActionShaping, ExtractPOVAndTranspose
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
 
     # Create environment
-    env = ExtractPOVTransposeAndNormalize(ActionShaping(gym.make("MineRLTreechop-v0")))
+    env = ExtractPOVAndTranspose(ActionShaping(gym.make("MineRLTreechop-v0")))
 
     # Download checkpoint locally (if not already cached)
-    run = wandb.init()
-    artifact = run.use_artifact('stkovacevic94/master-thesis/model-eb9vlat0:v2', type='model')
-    artifact_dir = artifact.download()
+    api = wandb.Api()
+    run = api.run('stkovacevic94/master-thesis/2dv2aoua')
+    file_dir = run.file('checkpoint_0.sqil').download(replace=True)
+    print(file_dir)
+    print(run.config)
 
     # Load the agent
-    model = Model(env.action_space.n, 3, AtariCNN, 512)
-    agent = BCAgent.load_from_checkpoint(os.path.join(artifact_dir, "model.ckpt"), policy=model, env=env, expert_demonstrations=None)
+    agent = SQILAgent(
+        device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+        observation_space=env.observation_space,
+        action_space=env.action_space,
+        feature_extractor=AtariCNN,
+        q_network_hidden_size=512,
+        batch_size=run.config['batch_size'],
+        lr=run.config['learning_rate'],
+        temp=run.config['temp'],
+        gamma=run.config['gamma'],
+        sync_rate=run.config['sync_rate']
+    )
+    agent.load(file_dir.name)
 
     # Test the agent
     done = False
@@ -31,7 +43,6 @@ if __name__ == "__main__":
     total_reward = 0
     while not done:
         env.render()
-        action = agent(torch.tensor(np.expand_dims(obs, axis=0), dtype=torch.float32))
-        print(action)
+        action = agent.act(obs)
         obs, reward, done, _ = env.step(action)
         total_reward += reward

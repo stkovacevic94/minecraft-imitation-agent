@@ -1,13 +1,57 @@
 from abc import ABC
+from os import path
+from typing import Iterable
 
 import gym
+import minerl
 import numpy as np
+from minerl.data import BufferedBatchIter
+
+from algorithms.common import Experience
 
 
-class ExtractPOVTransposeAndNormalize(gym.ObservationWrapper):
+def recursive_squeeze(dictlike):
     """
-
+    Take a possibly-nested dictionary-like object of which all leaf elements are numpy ar
     """
+    out = {}
+    for k, v in dictlike.items():
+        if isinstance(v, dict):
+            out[k] = recursive_squeeze(v)
+        else:
+            out[k] = np.squeeze(v)
+    return out
+
+
+def create_demonstration_iterator(wrapped_env, save_path, num_to_load=None) -> Iterable[Experience]:
+    env_id = wrapped_env.unwrapped.spec.id
+
+    # Download data if needed
+    if not path.exists(path.join(save_path, env_id)):
+        minerl.data.download(
+            directory=save_path,
+            environment=env_id,
+            update_environment_variables=False,
+            disable_cache=True
+        )
+
+    data_handle = minerl.data.make(env_id, save_path)
+    iterator = BufferedBatchIter(data_handle)
+    if num_to_load is None:
+        batch_iterator = iterator.buffered_batch_iter(batch_size=1, num_epochs=1)
+    else:
+        batch_iterator = iterator.buffered_batch_iter(batch_size=1, num_batches=num_to_load)
+    for obs, action, reward, next_obs, done in batch_iterator:
+        wrapped_obs = wrapped_env.observation(recursive_squeeze(obs))
+        wrapped_action = wrapped_env.wrap_action(recursive_squeeze(action))
+        wrapped_next_obs = wrapped_env.observation(recursive_squeeze(next_obs))
+
+        if wrapped_action != -1:
+            experience = Experience(wrapped_obs, wrapped_action, reward, wrapped_next_obs, done.squeeze())
+            yield experience
+
+
+class ExtractPOVAndTranspose(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)
 
@@ -17,14 +61,14 @@ class ExtractPOVTransposeAndNormalize(gym.ObservationWrapper):
                             non_transposed_shape[0],
                             non_transposed_shape[1])
         # Note: this assumes the Box is of the form where low/high values are vector but need to be scalar
-        transposed_obs_space = gym.spaces.Box(low=np.min(self.env.observation_space['pov'].low) / 255.0,
-                                              high=np.max(self.env.observation_space['pov'].high / 255.0),
+        transposed_obs_space = gym.spaces.Box(low=np.min(self.env.observation_space['pov'].low),
+                                              high=np.max(self.env.observation_space['pov'].high),
                                               shape=transposed_shape,
-                                              dtype=np.float32)
+                                              dtype=np.uint8)
         self.observation_space = transposed_obs_space
 
     def observation(self, observation):
-        wrapped_obs = observation['pov'].transpose((2, 0, 1)).astype(np.float32) / 255.0
+        wrapped_obs = observation['pov'].transpose((2, 0, 1))
         return wrapped_obs.copy()
 
 

@@ -1,88 +1,121 @@
 import argparse
 import os
-import logging
 
 import gym
+import numpy as np
+import torch
+import torch.nn.functional as F
 import wandb
-from pytorch_lightning.callbacks import ModelSummary, ModelCheckpoint
-import pytorch_lightning as pl
-from pytorch_lightning import seed_everything
-from pytorch_lightning.loggers import WandbLogger
+from torch.utils.data import TensorDataset, DataLoader
+from tqdm import tqdm
 
+from algorithms.common import Experience
 from algorithms.sqil import SQILAgent
-from data import ReplayBuffer, load_expert_demonstrations
-from model import ImpalaResNetCNN, Model, AtariCNN
-from wrappers import ActionShaping, ExtractPOVTransposeAndNormalize
+from algorithms.model import AtariCNN
+from wrappers import ActionShaping, ExtractPOVAndTranspose, create_demonstration_iterator
 
 
-def main(hparams):
-    deterministic = False
-    if hparams.seed is not None:
-        seed_everything(hparams.seed, workers=True)
-        #deterministic = True
+def validate_kl(agent: SQILAgent, validation_dataset: TensorDataset):
+    dataloader = DataLoader(validation_dataset, batch_size=1024)
+    kl_divs = []
+    entropies = []
+    for batch in dataloader:
+        obs, actions = batch
+        dist = agent.pi(obs)
+        entropies.append(torch.mean(dist.entropy()).item())
+        kl_divs.append(F.kl_div(torch.log(dist.probs), actions.to(agent.device)).item())
+    return np.mean(kl_divs), np.mean(entropies)
 
-    env = ExtractPOVTransposeAndNormalize(ActionShaping(gym.make("MineRLTreechop-v0")))
-    expert_demonstrations = ReplayBuffer(capacity=500000)
-    load_expert_demonstrations(expert_demonstrations, env, hparams.data_path, hparams.fast_dev_run)
 
-    q_network = Model(
-        num_actions=env.action_space.n,
-        image_channels=3,
-        cnn_module=AtariCNN,
-        hidden_size=512)
-
-    agent = SQILAgent(q_network=q_network,
-                      env=env,
-                      expert_demonstrations=expert_demonstrations,
-                      batch_size=hparams.batch_size,
-                      episode_max_length=hparams.episode_max_length,
-                      lr=hparams.learning_rate,
-                      alpha=hparams.alpha,
-                      gamma=hparams.gamma,
-                      sync_rate=hparams.sync_rate)
+def train_sqil(hparams):
+    torch.backends.cudnn.benchmark = True
 
     os.makedirs(hparams.logdir, exist_ok=True)
-    wandb_logger = WandbLogger(
-        settings=wandb.Settings(start_method="fork") if os.name == 'posix' else None,
+    wandb.init(
         project="master-thesis",
         group="SQIL",
         job_type='train',
-        log_model='all',
-        save_dir=hparams.logdir)
-    wandb_logger.watch(q_network, log='all')
+        dir=hparams.logdir,
+        config=hparams,
+        settings=wandb.Settings(start_method="fork") if os.name == 'posix' else None, )
 
-    trainer = pl.Trainer(
-        gpus=1,
-        max_steps=hparams.max_steps,
-        logger=wandb_logger,
-        track_grad_norm=2,
-        callbacks=[ModelSummary(max_depth=1), ModelCheckpoint(every_n_train_steps=10000)],
-        deterministic=deterministic,
-        fast_dev_run=hparams.fast_dev_run
-    )
+    env = ExtractPOVAndTranspose(ActionShaping(gym.make("MineRLTreechop-v0")))
+    if hparams.fast_dev_run:
+        num_to_load = 10000
+        val_to_load = 1000
+    else:
+        num_to_load = None
+        val_to_load = 10000
+    demo_iterator = iter(create_demonstration_iterator(env, hparams.data_path, num_to_load))
 
-    trainer.fit(agent)
+    val_obs = torch.zeros(size=(val_to_load, )+env.observation_space.shape)
+    val_act = torch.zeros(size=(val_to_load, 1))
+    for i in range(val_to_load):
+        experience = next(demo_iterator)
+        val_obs[i] = torch.FloatTensor(experience.obs)
+        val_act[i] = experience.action
+    val_dataset = TensorDataset(val_obs, val_act)
+
+    agent = SQILAgent(
+        device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+        observation_space=env.observation_space,
+        action_space=env.action_space,
+        feature_extractor=AtariCNN,
+        q_network_hidden_size=512,
+        batch_size=hparams.batch_size,
+        lr=hparams.learning_rate,
+        temp=hparams.temp,
+        gamma=hparams.gamma,
+        sync_rate=hparams.sync_rate)
+
+    agent.set_demonstrations(demo_iterator)
+    for episode in tqdm(range(hparams.max_episodes)):
+        obs = env.reset()
+        episode_reward = 0
+        for _ in range(hparams.episode_max_length):
+            action = agent.act(obs)
+            next_obs, reward, done, _ = env.step(action)
+            agent.step(Experience(obs, action, reward, next_obs, done))
+
+            obs = next_obs
+            episode_reward += reward
+
+            if agent.global_step % 10 == 0:
+                log_dict = {}
+                for p in list(
+                        filter(lambda param: param[1].grad is not None, agent.online_q_network.named_parameters())):
+                    log_dict[f'gradients/norm/{p[0]}'] = p[1].grad.data.norm(2).item()
+                wandb.log(log_dict, step=agent.global_step)
+            if done:
+                break
+        if episode % 5 == 0:
+            checkpoint_full_path = agent.save(wandb.run.dir)
+            wandb.save(checkpoint_full_path)
+        kl_div, entropy = validate_kl(agent, validation_dataset=val_dataset)
+        wandb.log({'reward': episode_reward,
+                   'episode': episode,
+                   'val_kl': kl_div,
+                   'val_entropy': entropy},
+                  step=agent.global_step)
+    wandb.finish()
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--seed', type=int, default=None, help='Specific seed for reproducibility')
     parser.add_argument('--logdir', type=str, default="./logs", help='Root directory path for logs')
     parser.add_argument('--data_path', type=str, required=True, help='Dataset path')
-    parser.add_argument('--max_steps', type=int, default=10**6, help='Number of steps to train')
+    parser.add_argument('--max_episodes', type=int, default=1000, help='Number of episodes to train')
     parser.add_argument('--fast_dev_run', action="store_true", help='Run 1 epoch for test')
 
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size')
 
-    parser.add_argument('--learning_rate', type=float, default=0.00001, help='Learning rate')
+    parser.add_argument('--learning_rate', type=float, default=0.0001, help='Learning rate')
     parser.add_argument('--episode_max_length', type=int, default=3000, help='Max episode length')
-    parser.add_argument('--alpha', type=float, default=4, help='Soft Q Learning alpha parameter')
-    parser.add_argument('--gamma', type=float, default=0.9, help='MDP discount parameter gamma')
-    parser.add_argument('--sync_rate', type=int, default=50, help='Rate at which target network and online network sync')
+    parser.add_argument('--temp', type=float, default=3, help='Soft Q Learning temperature parameter')
+    parser.add_argument('--gamma', type=float, default=0.99, help='MDP discount parameter gamma')
+    parser.add_argument('--sync_rate', type=int, default=100, help='Rate at which target network and online network sync')
 
     args = parser.parse_args()
 
-    main(args)
+    train_sqil(args)

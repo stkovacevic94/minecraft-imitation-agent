@@ -29,8 +29,7 @@ if __name__ == '__main__':
              'run_sqil.py',
              '--data_path', "./dataset",
              '--batch_size', '64',
-             '--max_steps', '1000000',
-             '--seed', '42'
+             '--max_episodes', '1000'
         ],
         docker_runtime_config=aml.runconfig.DockerConfiguration(use_docker=True),
         environment=env,

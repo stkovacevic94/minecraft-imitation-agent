@@ -1,30 +1,17 @@
+from typing import Union, Type
+
+import gym.spaces
 import torch.nn as nn
 from torch.nn import functional as F
 import math
 
 
-class Model(nn.Module):
-    def __init__(self, num_actions, image_channels, cnn_module, hidden_size=256):
-        super().__init__()
-
-        self.num_actions = num_actions
-
-        self.cnn = cnn_module(image_channels)
-        self.conv_output_size = self.cnn.output_size
-
-        self.fc_h_a = nn.Linear(self.conv_output_size, hidden_size)
-        self.fc_a = nn.Linear(hidden_size, num_actions)
-
-    def forward(self, x):
-        x = self.cnn(x)
-        x = x.view(-1, self.conv_output_size)
-        x = self.fc_h_a(x)
-        return self.fc_a(F.relu(x))
-
-
 class AtariCNN(nn.Module):
-    def __init__(self, input_channels):
+    def __init__(self, observation_space: gym.spaces.Box):
         super().__init__()
+        input_channels = observation_space.shape[0]
+        assert observation_space.shape[1] == 64, 'Currently not implemented for height != 64'
+        assert observation_space.shape[2] == 64, 'Currently not implemented for width != 64'
         self.conv_layers = nn.Sequential(
             nn.Conv2d(input_channels, 32, 8, stride=4, padding=0),
             nn.ReLU(),
@@ -54,9 +41,11 @@ class ImpalaResNetCNN(nn.Module):
             out = self.conv2(out)
             return out + x
 
-    def __init__(self, input_channels):
+    def __init__(self, observation_space: gym.spaces.Box):
         super().__init__()
-        depth_in = input_channels
+        depth_in = observation_space.shape[0]
+        assert observation_space.shape[1] == 64, 'Currently not implemented for height != 64'
+        assert observation_space.shape[2] == 64, 'Currently not implemented for width != 64'
         layers = []
         for depth_out in [32, 64, 64]:
             layers.extend([
@@ -71,3 +60,24 @@ class ImpalaResNetCNN(nn.Module):
 
     def forward(self, x):
         return self.conv_layers(x)
+
+
+class ActionNetwork(nn.Module):
+    def __init__(self,
+                 observation_space: gym.spaces.Box,
+                 action_space: gym.spaces.Discrete,
+                 cnn_module: Type[Union[ImpalaResNetCNN, AtariCNN]],
+                 hidden_size=256):
+        super().__init__()
+
+        self.feature_extractor = cnn_module(observation_space)
+        self.conv_output_size = self.feature_extractor.output_size
+
+        self.fc_h_a = nn.Linear(self.conv_output_size, hidden_size)
+        self.fc_a = nn.Linear(hidden_size, action_space.n)
+
+    def forward(self, x):
+        x = self.feature_extractor(x)
+        x = x.view(-1, self.conv_output_size)
+        x = self.fc_h_a(x)
+        return self.fc_a(F.relu(x))

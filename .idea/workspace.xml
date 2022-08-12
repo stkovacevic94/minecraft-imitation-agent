@@ -1,14 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2214a06f-e709-4bfa-ab32-cc04f0cc07d5" name="Changes" comment="Changed SQIL to AtariCNN">
+    <list default="true" id="2214a06f-e709-4bfa-ab32-cc04f0cc07d5" name="Changes" comment="Small fixes">
       <change afterPath="$PROJECT_DIR$/algorithms/bco.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/common.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/algorithms/ilpo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/minecraft-imitation.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/minecraft-imitation.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/algorithms/bc.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/bc.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/azureml/submit.py" beforeDir="false" afterPath="$PROJECT_DIR$/azureml/run_bc_aml.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run_bc.py" beforeDir="false" afterPath="$PROJECT_DIR$/run_bc.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_policy.py" beforeDir="false" afterPath="$PROJECT_DIR$/eval_policy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/bc.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/algorithms/sqil.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/sqil.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/azureml/run_bc_aml.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/azureml/run_sqil_aml.py" beforeDir="false" afterPath="$PROJECT_DIR$/azureml/run_sqil_aml.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/eval_policy.py" beforeDir="false" afterPath="$PROJECT_DIR$/eval_policy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/algorithms/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run_bc.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/run_sqil.py" beforeDir="false" afterPath="$PROJECT_DIR$/run_sqil.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/wrappers.py" beforeDir="false" afterPath="$PROJECT_DIR$/wrappers.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -19,8 +28,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Python Script" />
         <option value="Jupyter Notebook" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -35,28 +44,50 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "C:/Users/stkov/Projects/minecraft-imitation/azureml",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/stkov/Projects/minecraft-imitation/azureml&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\stkov\Projects\minecraft-imitation\azureml" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\stkov\Projects\minecraft-imitation\algorithms" />
       <recent name="C:\Users\stkov\Projects\minecraft-imitation\colab" />
       <recent name="C:\Users\stkov\Projects\minecraft-imitation" />
       <recent name="C:\Users\stkov\Projects\minecraft-imitation\data" />
-      <recent name="C:\Users\stkov\Projects\minecraft-imitation\algorithms" />
       <recent name="C:\Users\stkov\Projects\minecraft-imitation\env" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.run_bc_fast">
+  <component name="RunManager" selected="Python.run_sqil_fast">
+    <configuration name="common" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="minecraft-imitation" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/algorithms" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/algorithms/common.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="data" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="minecraft-imitation" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -145,72 +176,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="run_bc" type="PythonConfigurationType" factoryName="Python">
-      <module name="minecraft-imitation" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run_bc.py" />
-      <option name="PARAMETERS" value="--seed 21 --logdir &quot;C:\Users\stkov\Desktop\master-thesis-data\logs&quot; --data_path &quot;C:\Users\stkov\Desktop\master-thesis-data&quot;" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="run_bc_aml" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
-      <module name="minecraft-imitation" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/azureml" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/azureml/run_bc_aml.py" />
-      <option name="PARAMETERS" value="--config_path &quot;C:\Users\stkov\Desktop\master-thesis-data\.config&quot;" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="run_bc_fast" type="PythonConfigurationType" factoryName="Python">
-      <module name="minecraft-imitation" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run_bc.py" />
-      <option name="PARAMETERS" value="--seed 21 --logdir &quot;C:\Users\stkov\Desktop\master-thesis-data\logs&quot; --data_path &quot;C:\Users\stkov\Desktop\master-thesis-data&quot; --fast_dev_run" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="run_sqil" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="minecraft-imitation" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -225,7 +190,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run_sqil.py" />
-      <option name="PARAMETERS" value="--seed 21 --logdir &quot;C:\Users\stkov\Desktop\master-thesis-data\logs&quot; --data_path &quot;C:\Users\stkov\Desktop\master-thesis-data&quot;" />
+      <option name="PARAMETERS" value="--logdir &quot;C:\Users\stkov\Desktop\master-thesis-data\logs&quot; --data_path &quot;C:\Users\stkov\Desktop\master-thesis-data&quot;" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -269,7 +234,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run_sqil.py" />
-      <option name="PARAMETERS" value="--seed 21 --logdir &quot;C:\Users\stkov\Desktop\master-thesis-data\logs&quot; --data_path &quot;C:\Users\stkov\Desktop\master-thesis-data&quot; --fast_dev_run" />
+      <option name="PARAMETERS" value="--logdir &quot;C:\Users\stkov\Desktop\master-thesis-data\logs&quot; --data_path &quot;C:\Users\stkov\Desktop\master-thesis-data&quot; --fast_dev_run" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -281,10 +246,8 @@
       <item itemvalue="Python.provision_resources" />
       <item itemvalue="Python.run_sqil" />
       <item itemvalue="Python.run_sqil_fast" />
-      <item itemvalue="Python.run_bc_fast" />
-      <item itemvalue="Python.run_bc" />
       <item itemvalue="Python.run_sqil_aml" />
-      <item itemvalue="Python.run_bc_aml" />
+      <item itemvalue="Python.common" />
       <item itemvalue="Python.eval_policy" />
       <item itemvalue="Python.imitation_bc" />
       <item itemvalue="Python.data" />
@@ -292,6 +255,7 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.eval_policy" />
+        <item itemvalue="Python.common" />
         <item itemvalue="Python.imitation_bc" />
         <item itemvalue="Python.data" />
       </list>
@@ -305,7 +269,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1659296746797</updated>
-      <workItem from="1659296749329" duration="155957000" />
+      <workItem from="1659296749329" duration="205598000" />
+      <workItem from="1660212306164" duration="44063000" />
     </task>
     <task id="LOCAL-00001" summary="Added new models">
       <created>1659393493920</created>
@@ -405,7 +370,14 @@
       <option name="project" value="LOCAL" />
       <updated>1659964622014</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="Small fixes">
+      <created>1660060236324</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1660060236324</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -432,7 +404,8 @@
     <MESSAGE value="Implemented Soft Q Imitation Learning" />
     <MESSAGE value="SQIL now runs without errors" />
     <MESSAGE value="Changed SQIL to AtariCNN" />
-    <option name="LAST_COMMIT_MESSAGE" value="Changed SQIL to AtariCNN" />
+    <MESSAGE value="Small fixes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Small fixes" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -443,21 +416,23 @@
           <option name="timeStamp" value="42" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/data.py</url>
-          <line>97</line>
-          <option name="timeStamp" value="43" />
+          <url>file://$PROJECT_DIR$/eval_policy.py</url>
+          <line>15</line>
+          <option name="timeStamp" value="50" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/minecraft_imitation$prepare_aml.coverage" NAME="provision_resources Coverage Results" MODIFIED="1659868181774" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/azureml" />
-    <SUITE FILE_PATH="coverage/minecraft_imitation$run_sqil_fast.coverage" NAME="run_sqil_fast Coverage Results" MODIFIED="1659871140327" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/minecraft_imitation$run_sqil_aml.coverage" NAME="run_sqil_aml Coverage Results" MODIFIED="1659912167926" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/azureml" />
-    <SUITE FILE_PATH="coverage/minecraft_imitation$eval_policy.coverage" NAME="eval_policy Coverage Results" MODIFIED="1660057741082" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/minecraft_imitation$run_sqil_aml.coverage" NAME="run_sqil_aml Coverage Results" MODIFIED="1660294218858" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/azureml" />
+    <SUITE FILE_PATH="coverage/minecraft_imitation$run_sqil_fast.coverage" NAME="run_sqil_fast Coverage Results" MODIFIED="1660317634422" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/minecraft_imitation$provision_resources.coverage" NAME="provision_resources Coverage Results" MODIFIED="1660297387702" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/azureml" />
+    <SUITE FILE_PATH="coverage/minecraft_imitation$eval_policy.coverage" NAME="eval_policy Coverage Results" MODIFIED="1660315607321" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/minecraft_imitation$run_sqil.coverage" NAME="run_sqil Coverage Results" MODIFIED="1659892974082" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/minecraft_imitation$run_bc.coverage" NAME="run_bc_fast Coverage Results" MODIFIED="1659997147059" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/minecraft_imitation$imitation_bc.coverage" NAME="imitation_bc Coverage Results" MODIFIED="1660054210915" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/minecraft_imitation$common.coverage" NAME="common Coverage Results" MODIFIED="1660239809757" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algorithms" />
     <SUITE FILE_PATH="coverage/minecraft_imitation$submit.coverage" NAME="run_bc_aml Coverage Results" MODIFIED="1659997605522" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/azureml" />
     <SUITE FILE_PATH="coverage/minecraft_imitation$loader.coverage" NAME="data Coverage Results" MODIFIED="1659732000313" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>

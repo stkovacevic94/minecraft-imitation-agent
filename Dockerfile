@@ -40,4 +40,4 @@ RUN conda update -y conda
 RUN conda install python=3.9 pytorch=1.12.0 cudatoolkit=10.2 -c pytorch
 
 # Install pip packages
-RUN pip3 install wandb pandas pytorch-lightning minerl
+RUN pip3 install wandb minerl
