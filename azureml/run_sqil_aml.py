@@ -15,7 +15,7 @@ if __name__ == '__main__':
     experiment_name = "master-thesis"
 
     # Load Env and setup Env variables
-    env = aml.Environment.get(workspace=ws, name='minerl')
+    env = aml.Environment.get(workspace=ws, name='minerl-th')
     env.environment_variables['WANDB_API_KEY'] = auth_keys['wandb']
     env.environment_variables['WANDB_ENTITY'] = 'stkovacevic94'
     env.environment_variables['WANDB_PROJECT'] = experiment_name

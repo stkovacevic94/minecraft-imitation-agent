@@ -155,7 +155,8 @@ class SQILAgent(object):
             log_dict = {'loss': loss}
             dist = self.pi(torch.FloatTensor(expert_obs))
             log_dict['train_entropy'] = torch.mean(dist.entropy()).item()
-            log_dict['train_kl'] = F.kl_div(torch.log(dist.probs), torch.FloatTensor(expert_action).to(self.device))
+            true_actions = torch.LongTensor(expert_action).to(self.device)
+            log_dict['train_likelihood'] = dist.probs.gather(1, true_actions).mean().item()
             wandb.log(log_dict, step=self.global_step)
 
     def save(self, save_path):

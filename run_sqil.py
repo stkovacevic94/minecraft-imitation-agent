@@ -4,7 +4,6 @@ import os
 import gym
 import numpy as np
 import torch
-import torch.nn.functional as F
 import wandb
 from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
@@ -15,16 +14,16 @@ from algorithms.model import AtariCNN
 from wrappers import ActionShaping, ExtractPOVAndTranspose, create_demonstration_iterator
 
 
-def validate_kl(agent: SQILAgent, validation_dataset: TensorDataset):
+def validate(agent: SQILAgent, validation_dataset: TensorDataset):
     dataloader = DataLoader(validation_dataset, batch_size=1024)
-    kl_divs = []
+    probs = []
     entropies = []
     for batch in dataloader:
         obs, actions = batch
         dist = agent.pi(obs)
         entropies.append(torch.mean(dist.entropy()).item())
-        kl_divs.append(F.kl_div(torch.log(dist.probs), actions.to(agent.device)).item())
-    return np.mean(kl_divs), np.mean(entropies)
+        probs.append(dist.probs.gather(1, actions.cuda().long()).mean().item())
+    return np.mean(probs), np.mean(entropies)
 
 
 def train_sqil(hparams):
@@ -91,10 +90,10 @@ def train_sqil(hparams):
         if episode % 5 == 0:
             checkpoint_full_path = agent.save(wandb.run.dir)
             wandb.save(checkpoint_full_path)
-        kl_div, entropy = validate_kl(agent, validation_dataset=val_dataset)
+        likelihood, entropy = validate(agent, validation_dataset=val_dataset)
         wandb.log({'reward': episode_reward,
                    'episode': episode,
-                   'val_kl': kl_div,
+                   'train_likelihood': likelihood,
                    'val_entropy': entropy},
                   step=agent.global_step)
     wandb.finish()
