@@ -4,6 +4,7 @@ from collections import namedtuple, deque
 from typing import Tuple
 
 import numpy as np
+from torch.utils.data import Dataset
 
 Experience = namedtuple(
     "Experience",
@@ -11,18 +12,29 @@ Experience = namedtuple(
 )
 
 
-class ReplayBuffer:
+class ReplayBuffer(Dataset):
     """Replay Buffer for storing past experiences allowing the agent to learn from them.
 
     Args:
         capacity: size of the buffer
     """
 
-    def __init__(self, capacity: int) -> None:
+    def __init__(self, capacity: int = None) -> None:
         self.buffer = deque(maxlen=capacity)
 
     def __len__(self):
         return len(self.buffer)
+
+    def __getitem__(self, item):
+        obs, actions, rewards, next_obs, dones = self.buffer[item]
+
+        return (
+            np.array(obs, dtype=np.float32),
+            np.array(actions, dtype=np.longlong),
+            np.array(rewards, dtype=np.float32),
+            np.array(next_obs, dtype=np.float32),
+            np.array(dones, dtype=bool)
+        )
 
     def append(self, experience: Experience) -> None:
         """Add experience to the buffer.

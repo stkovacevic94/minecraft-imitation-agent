@@ -1,17 +1,17 @@
 from typing import Union, Type
 
 import gym.spaces
+import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import math
 
+gym.logger.set_level(40)
+
 
 class AtariCNN(nn.Module):
-    def __init__(self, observation_space: gym.spaces.Box):
+    def __init__(self, input_channels: int):
         super().__init__()
-        input_channels = observation_space.shape[0]
-        assert observation_space.shape[1] == 64, 'Currently not implemented for height != 64'
-        assert observation_space.shape[2] == 64, 'Currently not implemented for width != 64'
         self.conv_layers = nn.Sequential(
             nn.Conv2d(input_channels, 32, 8, stride=4, padding=0),
             nn.ReLU(),
@@ -41,12 +41,10 @@ class ImpalaResNetCNN(nn.Module):
             out = self.conv2(out)
             return out + x
 
-    def __init__(self, observation_space: gym.spaces.Box):
+    def __init__(self, input_channels: int):
         super().__init__()
-        depth_in = observation_space.shape[0]
-        assert observation_space.shape[1] == 64, 'Currently not implemented for height != 64'
-        assert observation_space.shape[2] == 64, 'Currently not implemented for width != 64'
         layers = []
+        depth_in = input_channels
         for depth_out in [32, 64, 64]:
             layers.extend([
                 nn.Conv2d(depth_in, depth_out, 3, padding=1),
@@ -70,7 +68,7 @@ class ActionNetwork(nn.Module):
                  hidden_size=256):
         super().__init__()
 
-        self.feature_extractor = cnn_module(observation_space)
+        self.feature_extractor = cnn_module(observation_space.shape[0])
         self.conv_output_size = self.feature_extractor.output_size
 
         self.fc_h_a = nn.Linear(self.conv_output_size, hidden_size)
@@ -79,5 +77,26 @@ class ActionNetwork(nn.Module):
     def forward(self, x):
         x = self.feature_extractor(x)
         x = x.view(-1, self.conv_output_size)
+        x = self.fc_h_a(x)
+        return self.fc_a(F.relu(x))
+
+
+class InverseDynamicsNetwork(nn.Module):
+    def __init__(self,
+                 observation_space: gym.spaces.Box,
+                 action_space: gym.spaces.Discrete,
+                 cnn_module: Type[Union[ImpalaResNetCNN, AtariCNN]],
+                 hidden_size=256):
+        super().__init__()
+
+        self.feature_extractor = cnn_module(observation_space.shape[0]*2)
+        self.conv_output_size = self.feature_extractor.output_size
+
+        self.fc_h_a = nn.Linear(self.conv_output_size, hidden_size)
+        self.fc_a = nn.Linear(hidden_size, action_space.n)
+
+    def forward(self, obs, next_obs):
+        x = torch.cat([obs, next_obs], dim=1)
+        x = self.feature_extractor(x).view(-1, self.conv_output_size)
         x = self.fc_h_a(x)
         return self.fc_a(F.relu(x))
