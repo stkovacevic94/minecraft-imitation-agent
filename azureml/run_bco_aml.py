@@ -28,10 +28,8 @@ if __name__ == '__main__':
              'xvfb-run -a python',
              'run_bco.py',
              '--data_path', "./dataset",
-             '--batch_size', '32',
-             '--max_episodes', '500',
-             '--up', '60000',
-             '--idm_epoch', '5',
+             '--batch_size', '64',
+             '--max_episodes', '500'
         ],
         docker_runtime_config=aml.runconfig.DockerConfiguration(use_docker=True),
         environment=env,

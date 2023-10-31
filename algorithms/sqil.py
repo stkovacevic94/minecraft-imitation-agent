@@ -30,6 +30,9 @@ class SQILAgent(object):
 
         self.device = device
         self.observation_space = observation_space
+        self.obs_low = torch.FloatTensor(self.observation_space.low).to(self.device)
+        obs_high = torch.FloatTensor(self.observation_space.high).to(self.device)
+        self.obs_range = obs_high - self.obs_low
 
         self.online_q_network = ActionNetwork(
             observation_space=observation_space,
@@ -66,7 +69,7 @@ class SQILAgent(object):
 
     @torch.no_grad()
     def pi(self, obs: np.array) -> torch.distributions.Categorical:
-        obs = torch.FloatTensor(obs).to(self.device)
+        obs = self._normalize(torch.FloatTensor(obs).to(self.device))
 
         if obs.shape == self.observation_space.shape:
             obs = obs.unsqueeze(0)
@@ -130,11 +133,8 @@ class SQILAgent(object):
         batch_done = torch.FloatTensor(np.concatenate((online_done, expert_done), axis=0)).to(self.device)
 
         # Normalize input
-        obs_low = torch.FloatTensor(self.observation_space.low).to(self.device)
-        obs_high = torch.FloatTensor(self.observation_space.high).to(self.device)
-        obs_range = obs_high - obs_low
-        batch_obs = (batch_obs - obs_low) / obs_range
-        batch_next_obs = (batch_next_obs - obs_low) / obs_range
+        batch_obs = self._normalize(batch_obs)
+        batch_next_obs = self._normalize(batch_next_obs)
 
         # Compute loss
         with torch.no_grad():
@@ -158,6 +158,10 @@ class SQILAgent(object):
             true_actions = torch.LongTensor(expert_action).to(self.device)
             log_dict['train_likelihood'] = dist.probs.gather(1, true_actions).mean().item()
             wandb.log(log_dict, step=self.global_step)
+
+    def _normalize(self, obs: torch.Tensor):
+        return (obs - self.obs_low) / self.obs_range
+
 
     def save(self, save_path):
         checkpoint_filename = f'checkpoint_{self.global_step}.sqil'

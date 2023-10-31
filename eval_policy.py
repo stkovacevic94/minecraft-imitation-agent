@@ -17,9 +17,9 @@ if __name__ == "__main__":
 
     # Download checkpoint locally (if not already cached)
     api = wandb.Api()
-    run = api.run('stkovacevic94/master-thesis/2dv2aoua')
-    file_dir = run.file('checkpoint_0.sqil').download(replace=True)
-    print(file_dir)
+    run = api.run("stkovacevic94/master-thesis/36stdhtb")
+    #file_dir = run.file('checkpoint_0.sqil').download(replace=True)
+    #print(file_dir)
     print(run.config)
 
     # Load the agent
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         gamma=run.config['gamma'],
         sync_rate=run.config['sync_rate']
     )
-    agent.load(file_dir.name)
+    agent.load('C:/Users/stkov/Downloads/checkpoint_106981.sqil')
 
     # Test the agent
     done = False
@@ -43,6 +43,6 @@ if __name__ == "__main__":
     total_reward = 0
     while not done:
         env.render()
-        action = agent.act(obs)
+        action = agent.act(obs.copy())
         obs, reward, done, _ = env.step(action)
         total_reward += reward

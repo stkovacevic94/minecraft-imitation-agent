@@ -11,7 +11,7 @@ from tqdm import tqdm
 from algorithms.common import Experience
 from algorithms.sqil import SQILAgent
 from algorithms.model import AtariCNN
-from wrappers import ActionShaping, ExtractPOVAndTranspose, create_demonstration_iterator
+from wrappers import ActionShaping, ExtractPOVAndTranspose, create_data_iterator
 
 
 def validate(agent: SQILAgent, validation_dataset: TensorDataset):
@@ -39,13 +39,14 @@ def train_sqil(hparams):
         settings=wandb.Settings(start_method="fork") if os.name == 'posix' else None, )
 
     env = ExtractPOVAndTranspose(ActionShaping(gym.make("MineRLTreechop-v0")))
+    env.seed(95)
     if hparams.fast_dev_run:
         num_to_load = 10000
         val_to_load = 1000
     else:
         num_to_load = None
         val_to_load = 10000
-    demo_iterator = iter(create_demonstration_iterator(env, hparams.data_path, num_to_load))
+    demo_iterator = iter(create_data_iterator(env, hparams.data_path, num_to_load))
 
     val_obs = torch.zeros(size=(val_to_load, )+env.observation_space.shape)
     val_act = torch.zeros(size=(val_to_load, 1))
@@ -68,11 +69,11 @@ def train_sqil(hparams):
         sync_rate=hparams.sync_rate)
 
     agent.set_demonstrations(demo_iterator)
-    for episode in tqdm(range(hparams.max_episodes)):
+    for episode in tqdm(range(hparams.max_episodes), desc='Episode'):
         obs = env.reset()
         episode_reward = 0
-        for _ in range(hparams.episode_max_length):
-            action = agent.act(obs)
+        for _ in tqdm(range(hparams.episode_max_length), desc=f'Episode {episode} rollout'):
+            action = agent.act(obs.copy())
             next_obs, reward, done, _ = env.step(action)
             agent.step(Experience(obs, action, reward, next_obs, done))
 
@@ -93,7 +94,7 @@ def train_sqil(hparams):
         likelihood, entropy = validate(agent, validation_dataset=val_dataset)
         wandb.log({'reward': episode_reward,
                    'episode': episode,
-                   'train_likelihood': likelihood,
+                   'val_likelihood': likelihood,
                    'val_entropy': entropy},
                   step=agent.global_step)
     wandb.finish()

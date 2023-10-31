@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from algorithms.bco import BCOAgent
 from algorithms.common import Experience, ReplayBuffer
-from algorithms.model import ImpalaResNetCNN
+from algorithms.model import ImpalaResNetCNN, AtariCNN
 from wrappers import ActionShaping, ExtractPOVAndTranspose, create_data_iterator
 
 
@@ -69,7 +69,7 @@ def train_bco(hparams):
     env = ExtractPOVAndTranspose(ActionShaping(gym.make("MineRLTreechop-v0")))
     env.seed(95)
 
-    num_to_load = 20000 if hparams.fast_dev_run else None
+    num_to_load = 50000 if hparams.fast_dev_run else None
     demo_iterator = iter(create_data_iterator(env, hparams.data_path, num_to_load))
 
     train_demonstrations, val_demonstrations = create_datasets(demo_iterator)
@@ -78,12 +78,13 @@ def train_bco(hparams):
         device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
         observation_space=env.observation_space,
         action_space=env.action_space,
-        feature_extractor=ImpalaResNetCNN,
+        feature_extractor=AtariCNN,
         q_network_hidden_size=512,
         batch_size=hparams.batch_size,
         pol_lr=hparams.plr,
         inv_dyn_lr=hparams.ilr,
-        update_period=hparams.up,
+        first_update_period=hparams.up,
+        alpha=hparams.a,
         num_epochs_idm=hparams.idm_epoch)
 
     validate(agent, val_demonstrations, 0)
@@ -131,11 +132,12 @@ if __name__ == "__main__":
 
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size')
 
-    parser.add_argument('--plr', type=float, default=0.001, help='Learning rate for policy')
-    parser.add_argument('--ilr', type=float, default=0.001, help='Learning rate for inverse dynamics')
-    parser.add_argument('--episode_max_length', type=int, default=6000, help='Max episode length')
-    parser.add_argument('--up', type=int, default=30000, help='Inverse dynamics and policy update period (in env steps)')
-    parser.add_argument('--idm_epoch', type=int, default=10, help='Inverse dynamics number of epoch per update')
+    parser.add_argument('--plr', type=float, default=0.007, help='Learning rate for policy')
+    parser.add_argument('--ilr', type=float, default=0.007, help='Learning rate for inverse dynamics')
+    parser.add_argument('--episode_max_length', type=int, default=10000, help='Max episode length')
+    parser.add_argument('--up', type=int, default=100, help='Inverse dynamics and policy update period (in env steps)')
+    parser.add_argument('--a', type=float, default=0.001, help='Alpha parameter in BCO(alpha)')
+    parser.add_argument('--idm_epoch', type=int, default=1, help='Inverse dynamics number of epoch per update')
 
     args = parser.parse_args()
 

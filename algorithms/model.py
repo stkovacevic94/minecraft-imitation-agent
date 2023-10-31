@@ -89,14 +89,17 @@ class InverseDynamicsNetwork(nn.Module):
                  hidden_size=256):
         super().__init__()
 
-        self.feature_extractor = cnn_module(observation_space.shape[0]*2)
+        self.feature_extractor = cnn_module(observation_space.shape[0])
         self.conv_output_size = self.feature_extractor.output_size
 
-        self.fc_h_a = nn.Linear(self.conv_output_size, hidden_size)
-        self.fc_a = nn.Linear(hidden_size, action_space.n)
+        self.fc_h_1 = nn.Linear(self.conv_output_size*2, hidden_size)
+        self.fc_h_2 = nn.Linear(hidden_size, hidden_size // 2)
+        self.fc_a = nn.Linear(hidden_size // 2, action_space.n)
 
     def forward(self, obs, next_obs):
-        x = torch.cat([obs, next_obs], dim=1)
-        x = self.feature_extractor(x).view(-1, self.conv_output_size)
-        x = self.fc_h_a(x)
-        return self.fc_a(F.relu(x))
+        obs_features = self.feature_extractor(obs).view(-1, self.conv_output_size)
+        next_obs_features = self.feature_extractor(next_obs).view(-1, self.conv_output_size)
+        h = torch.cat([obs_features, next_obs_features], dim=1)
+        h = F.relu(self.fc_h_1(h))
+        h = F.relu(self.fc_h_2(h))
+        return self.fc_a(h)
